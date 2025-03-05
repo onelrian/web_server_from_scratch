@@ -3,7 +3,7 @@ use std::{
     thread,
 };
 
-use crate::job::{self, Job};
+use crate::job::Job;
 
 pub struct Worker {
     id: usize,
@@ -13,9 +13,18 @@ pub struct Worker {
 impl Worker {
     pub fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Self {
         let thread = thread::spawn(move || loop {
-            while let Ok(job) = receiver.lock().unwrap().recv() {
-                println!("Worker {id} got a Job ; Executing.");
-                job();
+            let message = receiver.lock().unwrap().recv();
+
+            match message {
+                Ok(job) => {
+                    println!("Worker {id} got a Job ; Executing.");
+                    job();
+                }
+
+                Err(_) => {
+                    println!("Worker {id} disconnected; shutting down.");
+                    break; 
+                }
             }
         });
 
