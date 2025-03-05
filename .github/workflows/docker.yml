@@ -10,7 +10,7 @@ on:
 env:
   IMAGE_NAME: rust-threadpool-server
   GHCR_REGISTRY: ghcr.io
-  GHCR_OWNER: your-github-username  # Replace with your actual GitHub username or organization name
+  GHCR_OWNER: onelrian
 
 jobs:
   build-and-slim:
