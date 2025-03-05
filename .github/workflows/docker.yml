@@ -1,0 +1,51 @@
+name: Build, Slim, and Push Docker Image
+
+# Trigger the workflow on push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+# Environment variables
+env:
+  IMAGE_NAME: rust-threadpool-server
+  GHCR_REGISTRY: ghcr.io
+  GHCR_OWNER: your-github-username  # Replace with your actual GitHub username or organization name
+
+jobs:
+  build-and-slim:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Log in to GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.IMAGE_NAME }}:latest .
+          docker tag ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.IMAGE_NAME }}:latest ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # Slim the Docker image using docker-slim-action
+      - name: Slim Docker image
+        uses: kitabisa/docker-slim-action@v1
+        env:
+          DSLIM_HTTP_PROBE: "false"  # Disable HTTP probes if not needed
+        with:
+          target: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.IMAGE_NAME }}:latest
+          tag: slim 
+
+      # Push the slimmed Docker image
+      - name: Push slimmed Docker image
+        run: |
+          docker push ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.IMAGE_NAME }}:slim  # Push slimmed image
+          docker push ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}  # Optionally push the tagged version
