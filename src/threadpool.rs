@@ -1,6 +1,12 @@
-use std::{sync::{mpsc, Arc, Mutex}, thread};
+use std::{
+    sync::{mpsc, Arc, Mutex},
+    thread,
+};
 
-use crate::{job::Job, worker::Worker};
+use crate::{
+    job::Job,
+    worker::{self, Worker},
+};
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
@@ -36,6 +42,16 @@ impl ThreadPool {
         F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
-        self .sender.send(job).unwrap()
+        self.sender.send(job).unwrap()
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        for worker in &mut self.workers.drain(..) {
+            println!("Shutting Down Worker {}", worker.get_worker_id());
+
+            worker.thread.join().unwrap();
+        }
     }
 }
