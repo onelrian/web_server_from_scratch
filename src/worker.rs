@@ -7,7 +7,7 @@ use crate::job::{self, Job};
 
 pub struct Worker {
     id: usize,
-    thread: thread::JoinHandle<()>,
+    pub thread: thread::JoinHandle<()>,
 }
 
 impl Worker {
@@ -20,5 +20,13 @@ impl Worker {
         });
 
         Worker { id, thread }
+    }
+
+    pub fn get_worker_id(&self) -> usize {
+        self.id
+    }
+
+    pub fn set_worker_id(&mut self, id: usize) {
+        self.id = id
     }
 }
